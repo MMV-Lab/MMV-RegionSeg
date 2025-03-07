@@ -1,30 +1,17 @@
 name: mmv-regionseg
 display_name: MMV-RegionSeg
 # use 'hidden' to remove plugin from napari hub search results
+schema_version: 0.2.0
 visibility: public
-# see https://napari.org/stable/plugins/technical_references/manifest.html#fields for valid categories
-categories: ["Annotation", "Segmentation", "Acquisition"]
+# see
+# https://napari.org/stable/plugins/technical_references/manifest.html#fields
+# for valid categories
+categories: ["Segmentation"]
 contributions:
   commands:
-    - id: mmv-regionseg.make_container_widget
-      python_name: mmv_regionseg:ImageThreshold
-      title: Make threshold Container widget
-    - id: mmv-regionseg.make_magic_widget
-      python_name: mmv_regionseg:threshold_magic_widget
-      title: Make threshold magic widget
-    - id: mmv-regionseg.make_function_widget
-      python_name: mmv_regionseg:threshold_autogenerate_widget
-      title: Make threshold function widget
-    - id: mmv-regionseg.make_qwidget
-      python_name: mmv_regionseg:ExampleQWidget
-      title: Make example QWidget
+    - id: mmv-regionseg.make_mmv_regionseg
+      python_name: mmv_regionseg._widget:mmv_regionseg
+      title: Make MMV RegionSeg
   widgets:
-    - command: mmv-regionseg.make_container_widget
-      display_name: Container Threshold
-    - command: mmv-regionseg.make_magic_widget
-      display_name: Magic Threshold
-    - command: mmv-regionseg.make_function_widget
-      autogenerate: true
-      display_name: Autogenerate Threshold
-    - command: mmv-regionseg.make_qwidget
-      display_name: Example QWidget
+    - command: mmv-regionseg.make_mmv_regionseg
+      display_name: mmv-regionseg
