@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     import napari
 
 
-class mmv_regionseg(QWidget):
+class MMV_RegionSeg(QWidget):
     # (06.03.2025)
 
     # your QWidget.__init__ can optionally request the napari viewer instance

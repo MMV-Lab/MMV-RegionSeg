@@ -12,7 +12,7 @@ from unittest import mock
 from unittest.mock import patch
 from pathlib import Path
 from tifffile import imread, imwrite
-from mmv_regionseg._widget import mmv_regionseg
+from mmv_regionseg._widget import MMV_RegionSeg
 
 # A single constant
 PARENT = Path(__file__).parent / 'data'
@@ -24,12 +24,12 @@ PARENT = Path(__file__).parent / 'data'
 def region_seg(make_napari_viewer):
     # (20.03.2025) create a mmv_regionseg object and give it back
     viewer = make_napari_viewer()
-    return mmv_regionseg(viewer)
+    return MMV_RegionSeg(viewer)
 
 @pytest.mark.init
 def test_init(region_seg):
     # (12.09.2024)
-    assert isinstance(region_seg, mmv_regionseg)
+    assert isinstance(region_seg, MMV_RegionSeg)
     assert region_seg.name == None
     assert region_seg.image == None
     assert region_seg.mask == None

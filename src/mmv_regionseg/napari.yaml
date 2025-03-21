@@ -1,5 +1,5 @@
 name: mmv-regionseg
-display_name: MMV-RegionSeg
+display_name: MMV-Region Segmentation
 # use 'hidden' to remove plugin from napari hub search results
 schema_version: 0.2.0
 visibility: public
@@ -10,8 +10,8 @@ categories: ["Segmentation"]
 contributions:
   commands:
     - id: mmv-regionseg.make_mmv_regionseg
-      python_name: mmv_regionseg._widget:mmv_regionseg
+      python_name: mmv_regionseg._widget:MMV_RegionSeg
       title: Make MMV RegionSeg
   widgets:
     - command: mmv-regionseg.make_mmv_regionseg
-      display_name: mmv-regionseg
+      display_name: MMV-RegionSeg
