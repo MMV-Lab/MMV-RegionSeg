@@ -1,6 +1,6 @@
-__version__ = "0.1.0"
-from ._widget import mmv_regionseg
+__version__ = "0.2.1"
+from ._widget import MMV_RegionSeg
 
 __all__ = (
-    "mmv_regionseg",
+    "MMV_RegionSeg",
 )

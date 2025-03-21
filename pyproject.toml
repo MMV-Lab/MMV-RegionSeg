@@ -1,34 +1,35 @@
+[build-system]
+requires = ["setuptools>=42.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "mmv-regionseg"
-dynamic = ["version"]
-description = "A Napari plugin for the segmentation of regions by flood_fill"
+version = "0.2.1"
+description = "Napari plugin for the segmentation of regions by flood"
 readme = "README.md"
+authors = [{name = "Peter Lampen", email = "lampen@isas.de"}]
 license = {file = "LICENSE"}
-authors = [
-  {name = "Peter Lampen"},
-  {email = "lampen@isas.de"},
-]
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
     "Framework :: napari",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
-    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Image Processing",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Topic :: Scientific/Engineering :: Image Processing",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: BSD License",
 ]
-requires-python = ">=3.9"
 dependencies = [
+    "napari",
     "numpy",
-    "magicgui",
     "qtpy",
     "scikit-image",
+    "tifffile",
 ]
 
 [project.optional-dependencies]
@@ -41,18 +42,12 @@ testing = [
     "pyqt5",
 ]
 
-[project.entry-points."napari.manifest"]
-mmv-regionseg = "mmv_regionseg:napari.yaml"
-
 [project.urls]
+"Homepage" = "https://github.com/MMV-Lab/mmv-regionseg"
 "Bug Tracker" = "https://github.com/MMV-Lab/mmv-regionseg/issues"
 "Documentation" = "https://github.com/MMV-Lab/mmv-regionseg#README.md"
 "Source Code" = "https://github.com/MMV-Lab/mmv-regionseg"
 "User Support" = "https://github.com/MMV-Lab/mmv-regionseg/issues"
-
-[build-system]
-requires = ["setuptools>=42.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 include-package-data = true
@@ -63,56 +58,32 @@ where = ["src"]
 [tool.setuptools.package-data]
 "*" = ["*.yaml"]
 
+[project.entry-points."napari.manifest"]
+mmv-regionseg = "mmv_regionseg:napari.yaml"
 
-[tool.setuptools.dynamic]
-version = {attr = "mmv_regionseg.__init__.__version__"}
+[tool.bumpversion]
+current_version = "0.2.1"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+tag = false
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+allow_dirty = false
+commit = false
+message = "Bump version: {current_version} → {new_version}"
+commit_args = ""
 
-[tool.black]
-line-length = 79
-target-version = ['py38', 'py39', 'py310']
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
 
-[tool.ruff]
-line-length = 79
-lint.select = [
-    "E", "F", "W", #flake8
-    "UP", # pyupgrade
-    "I", # isort
-    "BLE", # flake8-blind-exception
-    "B", # flake8-bugbear
-    "A", # flake8-builtins
-    "C4", # flake8-comprehensions
-    "ISC", # flake8-implicit-str-concat
-    "G", # flake8-logging-format
-    "PIE", # flake8-pie
-    "SIM", # flake8-simplify
-]
-lint.ignore = [
-    "E501", # line too long. let black handle this
-    "UP006", "UP007", # type annotation. As using magicgui require runtime type annotation then we disable this.
-    "SIM117", # flake8-simplify - some of merged with statements are not looking great with black, reanble after drop python 3.9
-]
-
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".mypy_cache",
-    ".pants.d",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-    "*vendored*",
-    "*_vendor*",
-]
-
-target-version = "py38"
-fix = true
+[[tool.bumpversion.files]]
+filename = "src/mmv_regionseg/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
