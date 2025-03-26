@@ -1,4 +1,4 @@
-# Copyright © Peter Lampen, ISAS Dortmund, 2025
+ # Copyright © Peter Lampen, ISAS Dortmund, 2025
 # (06.03.2025)
 
 from typing import TYPE_CHECKING
@@ -7,16 +7,19 @@ import napari
 import numpy as np
 from pathlib import Path
 from qtpy.QtCore import Qt
+from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import (
     QFileDialog,
     QLabel,
     QPushButton,
     QSlider,
     QVBoxLayout,
+    QShortcut,
     QWidget
 )
+from skimage.morphology import ball
 from skimage.segmentation import flood, flood_fill
-from tifffile import imread, imwrite
+from tifffile import imread
 
 if TYPE_CHECKING:
     import napari
@@ -74,6 +77,11 @@ class MMV_RegionSeg(QWidget):
         btn_floot = QPushButton('Floot')
         btn_floot.clicked.connect(self.start_floot)
         vbox.addWidget(btn_floot)
+
+        # Button 'Growth'
+        btn_growth = QPushButton('Growth')
+        btn_growth.clicked.connect(self.growth_tool_3d)
+        vbox.addWidget(btn_growth)
 
     def read_image(self):
         # Find and load the image file
@@ -150,8 +158,92 @@ class MMV_RegionSeg(QWidget):
             mask2 = mask1.astype(int) * self.color
             self.mask += mask2
 
+        self.seed_points = []       # Delete the seed points
+        self.viewer.add_labels(self.mask, name='mask')
+
+    def growth_tool_3d(self):
+        # (26.03.2025)
+        # Delete the callback function on_click
+        if self.name != None:
+            layer = self.viewer.layers[self.name]
+            layer.mouse_drag_callbacks.remove(self.on_click)
+
+        self.color += 1
+        self.seed_point = self.seed_points[0]
+        self.step = 10              # Growth step (radius increase)
+        self.radius = self.step     # Start radius
+        self.running = True         # Flag for running process
+
+        # Determine the seed value
+        self.seed_value = self.image[self.seed_point]
+
+        # Initialize mask
+        self.mask = np.zeros(self.image.shape, dtype=int)
+        
+        # Space for hotkey_callback function
+        self.space_shortcut = QShortcut(QKeySequence('Space'),
+            self.viewer.window._qt_viewer)
+        self.space_shortcut.activated.connect(self.hotkey_callback)
+        
+        # ESC for termination
+        self.esc_shortcut = QShortcut(QKeySequence('Esc'),
+            self.viewer.window._qt_viewer)
+        self.esc_shortcut.activated.connect(self.stop_growth)
+
+        # Add first mask
+        self.layer = self.viewer.add_labels(self.mask, name='mask')
+
         # Delete the seed points
         self.seed_points = []
 
-        name1 = 'mask'
-        self.viewer.add_labels(self.mask, name=name1)
+    def hotkey_callback(self):
+        # Expands the mask each time the space bar is pressed
+        if not self.running:
+            return      # If ESC was pressed, don't perform any more actions
+
+        """ 
+        self.connect += 10
+        mask1 = flood(self.image, self.point, connectivity=self.connect, \
+            tolerance=self.tolerance)
+        mask2 = mask1.astype(int) * self.color
+        """
+
+        # Draw a spherical region around the seed point with the current radius
+        ball_mask = ball(self.radius)
+
+        # Spherical mask has a shape (D, H, W) where D=depth, H=height, W=width
+        d, h, w = ball_mask.shape
+        center = (d // 2, h // 2, w // 2)
+
+        # Find all points within the sphere
+        rr, cc, zz = np.where(ball_mask > 0)
+
+        # Calculate absolute coordinates
+        rr = rr + (self.seed_point[0] - center[0])
+        cc = cc + (self.seed_point[1] - center[1])
+        zz = zz + (self.seed_point[2] - center[2])
+
+        # Filter invalid indices (which are outside the image)
+        valid = (rr >= 0) & (rr < self.image.shape[0]) & \
+                (cc >= 0) & (cc < self.image.shape[1]) & \
+                (zz >= 0) & (zz < self.image.shape[2])
+
+        rr, cc, zz = rr[valid], cc[valid], zz[valid]
+
+        # Only select voxels that are within the tolerance
+        voxel_values = self.image[rr, cc, zz]
+        in_tolerance = (voxel_values >= self.seed_value - self.tolerance) & \
+                       (voxel_values <= self.seed_value + self.tolerance)
+
+        # Update the mask
+        self.mask[rr[in_tolerance], cc[in_tolerance], zz[in_tolerance]] = 1
+
+        # Update the mask in Napari
+        self.layer.data = self.mask
+
+        # Increase the radius for the next step
+        self.radius += self.step
+
+    def stop_growth(self):
+        print('ESC pressed - stop growth')
+        self.running = False
