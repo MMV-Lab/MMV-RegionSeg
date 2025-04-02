@@ -9,6 +9,7 @@ from pathlib import Path
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import (
+    QApplication,
     QFileDialog,
     QLabel,
     QPushButton,
@@ -20,6 +21,7 @@ from qtpy.QtWidgets import (
 from skimage.morphology import ball
 from skimage.segmentation import flood, flood_fill
 from tifffile import imread
+import time
 
 if TYPE_CHECKING:
     import napari
@@ -35,10 +37,9 @@ class MMV_RegionSeg(QWidget):
         self.viewer = viewer
         self.name = None
         self.image = None
-        self.mask = None
         self.tolerance = 10
         self.color = 0
-        self.seed_points = []
+        self.first_call = True
 
         # Define a vbox for the main widget
         vbox = QVBoxLayout()
@@ -116,134 +117,91 @@ class MMV_RegionSeg(QWidget):
         self.lbl_tolerance.setText('Tolerance: %d' % (value))
 
     def new_seed_points(self):
-        # (07.03.2025)
-        # Defines the callback function on_click
-        if self.name != None:
-            layer = self.viewer.layers[self.name]
-            layer.mouse_drag_callbacks.append(self.on_click)
-
-            # select the image layer as active
-            self.viewer.layers.selection.active = layer
-        else:
-            print('Can\'t find an image!')
-
-    def on_click(self, layer, event):
-        # (07.03.2025)
-        # Retrieve mouse-click coordinates
-        if event.type == 'mouse_press' and event.button == 2:
-            point = event.position
-        else:
-            return
-
-        # Convert the float tuple into an integer tuple
-        iterator = map(int, point)
-        point = tuple(iterator)
-        self.seed_points.append(point)
-
-        color = self.image[point]
-        print('Clicked at:', point, 'color:', color)
+        # (02.04.2025)
+        # Define a points layer
+        self.points_layer = self.viewer.add_points(data=np.empty((0, 3)),
+            size=10, border_color='red', face_color='white', name='seed points')
+        self.points_layer.mode = 'add'
 
     def start_floot(self):
         # (07.03.2025)
-        # Delete the callback function on_click
-        if self.name != None:
-            layer = self.viewer.layers[self.name]
-            layer.mouse_drag_callbacks.remove(self.on_click)
+        # Form a list of tuples from the ndarray points_layer.data and convert
+        # the data into int values
+        points = self.points_layer.data
+        seed_points = [tuple(map(round, row)) for row in points]
 
-        # Determine a mask that corresponds to a flood_fill
+        # Determine a mask that corresponds to flood()
         self.color += 1
-        self.mask = np.zeros(self.image.shape, dtype=int)
-        for point in self.seed_points:
+        mask = np.zeros(self.image.shape, dtype=int)
+        for point in seed_points:
             mask1 = flood(self.image, point, tolerance=self.tolerance)
-            mask2 = mask1.astype(int) * self.color
-            self.mask += mask2
+            mask1 = mask1.astype(int) * self.color
+            mask += mask1
 
-        self.seed_points = []       # Delete the seed points
-        self.viewer.add_labels(self.mask, name='mask')
+        # Store the flood mask in a label layer
+        self.viewer.add_labels(mask, name='flood_mask')
+
+        # Delete the points layer for the next run.
+        if self.points_layer in self.viewer.layers:
+            self.viewer.layers.remove(self.points_layer)
 
     def growth_tool_3d(self):
         # (26.03.2025)
-        # Delete the callback function on_click
-        if self.name != None:
-            layer = self.viewer.layers[self.name]
-            layer.mouse_drag_callbacks.remove(self.on_click)
+        points = self.points_layer.data
+        seed_points = [tuple(map(round, row)) for row in points]
 
+        # Set some start values
+        seed_point = seed_points[0]
         self.color += 1
-        self.seed_point = self.seed_points[0]
-        self.step = 10              # Growth step (radius increase)
-        self.radius = self.step     # Start radius
-        self.running = True         # Flag for running process
+        radius = 0                  # Start radius
+        step = 10                   # Growth step (radius increase)
 
-        # Determine the seed value
-        self.seed_value = self.image[self.seed_point]
+        # Initialize and add the mask
+        mask = np.zeros(self.image.shape, dtype=int)
+        label_layer = self.viewer.add_labels(mask, name='growth_mask')
+        mask = flood(self.image, seed_point, tolerance=self.tolerance)
 
-        # Initialize mask
-        self.mask = np.zeros(self.image.shape, dtype=int)
-        
-        # Space for hotkey_callback function
-        self.space_shortcut = QShortcut(QKeySequence('Space'),
-            self.viewer.window._qt_viewer)
-        self.space_shortcut.activated.connect(self.hotkey_callback)
-        
-        # ESC for termination
-        self.esc_shortcut = QShortcut(QKeySequence('Esc'),
-            self.viewer.window._qt_viewer)
-        self.esc_shortcut.activated.connect(self.stop_growth)
+        for i in range(20):
+            print('step:', i)
+            radius += step
+            self.next_step(seed_point, mask, label_layer, radius)
+            label_layer.refresh()               # Force an update of the layer
+            QApplication.processEvents()        # Qt forces rendering
+            time.sleep(0.1)
 
-        # Add first mask
-        self.layer = self.viewer.add_labels(self.mask, name='mask')
+        # Delete the points layer for the next run.
+        if self.points_layer in self.viewer.layers:
+            self.viewer.layers.remove(self.points_layer)
 
-        # Delete the seed points
-        self.seed_points = []
+    def next_step(self, seed_point, mask, label_layer, radius):
+        # (26.03.2025) Expands the mask each time
+        # Draw a spherical region with the current radius
+        sphere = ball(radius)
 
-    def hotkey_callback(self):
-        # Expands the mask each time the space bar is pressed
-        if not self.running:
-            return      # If ESC was pressed, don't perform any more actions
-
-        """ 
-        self.connect += 10
-        mask1 = flood(self.image, self.point, connectivity=self.connect, \
-            tolerance=self.tolerance)
-        mask2 = mask1.astype(int) * self.color
-        """
-
-        # Draw a spherical region around the seed point with the current radius
-        ball_mask = ball(self.radius)
-
-        # Spherical mask has a shape (D, H, W) where D=depth, H=height, W=width
-        d, h, w = ball_mask.shape
+        # Spherical mask has a shape (d, h, w) where d=depth, h=height, w=width
+        d, h, w = sphere.shape
         center = (d // 2, h // 2, w // 2)
 
-        # Find all points within the sphere
-        rr, cc, zz = np.where(ball_mask > 0)
+        # Find all points within the sphere, rr=row, cc=column, zz=depth
+        rr, cc, zz = np.where(sphere > 0)
 
         # Calculate absolute coordinates
-        rr = rr + (self.seed_point[0] - center[0])
-        cc = cc + (self.seed_point[1] - center[1])
-        zz = zz + (self.seed_point[2] - center[2])
+        rr += (seed_point[0] - center[0])
+        cc += (seed_point[1] - center[1])
+        zz += (seed_point[2] - center[2])
 
-        # Filter invalid indices (which are outside the image)
+        # Filter invalid indices, which are outside the image
         valid = (rr >= 0) & (rr < self.image.shape[0]) & \
                 (cc >= 0) & (cc < self.image.shape[1]) & \
                 (zz >= 0) & (zz < self.image.shape[2])
-
         rr, cc, zz = rr[valid], cc[valid], zz[valid]
 
-        # Only select voxels that are within the tolerance
-        voxel_values = self.image[rr, cc, zz]
-        in_tolerance = (voxel_values >= self.seed_value - self.tolerance) & \
-                       (voxel_values <= self.seed_value + self.tolerance)
-
-        # Update the mask
-        self.mask[rr[in_tolerance], cc[in_tolerance], zz[in_tolerance]] = 1
+        # Update the sphere
+        sphere = np.zeros(self.image.shape, dtype=int)
+        sphere = sphere.astype(bool)
+        sphere[rr, cc, zz] = True
 
         # Update the mask in Napari
-        self.layer.data = self.mask
-
-        # Increase the radius for the next step
-        self.radius += self.step
-
-    def stop_growth(self):
-        print('ESC pressed - stop growth')
-        self.running = False
+        mask2 = mask & sphere
+        mask2 = mask2.astype(int) * self.color
+        label_layer.data = mask2
