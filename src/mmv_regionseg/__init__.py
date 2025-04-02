@@ -1,4 +1,4 @@
-__version__ = "0.2.1"
+__version__ = "0.2.3"
 from ._widget import MMV_RegionSeg
 
 __all__ = (
