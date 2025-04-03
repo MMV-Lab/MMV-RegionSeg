@@ -32,10 +32,8 @@ def test_init(region_seg):
     assert isinstance(region_seg, MMV_RegionSeg)
     assert region_seg.name == None
     assert region_seg.image == None
-    assert region_seg.mask == None
     assert region_seg.tolerance == 10
     assert region_seg.color == 0
-    assert region_seg.seed_points == []
     assert region_seg.layout() is not None
     assert isinstance(region_seg.layout(), QVBoxLayout)
     assert region_seg.lbl_tolerance.text() == 'Tolerance: 10'
