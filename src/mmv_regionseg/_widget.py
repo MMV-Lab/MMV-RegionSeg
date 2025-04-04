@@ -70,10 +70,6 @@ class MMV_RegionSeg(QWidget):
         btn_seed_points.clicked.connect(self.new_seed_points)
         vbox.addWidget(btn_seed_points)
 
-        # Note
-        lbl_note = QLabel('To select, use the right mouse button')
-        vbox.addWidget(lbl_note)
-
         # Button 'Start floot'
         btn_floot = QPushButton('Floot')
         btn_floot.clicked.connect(self.start_floot)
@@ -161,7 +157,7 @@ class MMV_RegionSeg(QWidget):
         for point in seed_points:
             flood_mask = flood(self.image, point, tolerance=self.tolerance)
             radius = 0              # Start radius
-            step = 5                # Growth step (radius increase)
+            step = 10               # Growth step (radius increase)
             sum0 = 0                # Number of pixels
 
             go_on = True
