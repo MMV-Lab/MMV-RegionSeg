@@ -70,10 +70,6 @@ class MMV_RegionSeg(QWidget):
         btn_seed_points.clicked.connect(self.new_seed_points)
         vbox.addWidget(btn_seed_points)
 
-        # Note
-        lbl_note = QLabel('To select, use the right mouse button')
-        vbox.addWidget(lbl_note)
-
         # Button 'Start floot'
         btn_floot = QPushButton('Floot')
         btn_floot.clicked.connect(self.start_floot)
@@ -120,7 +116,7 @@ class MMV_RegionSeg(QWidget):
         # (02.04.2025)
         # Define a points layer
         self.points_layer = self.viewer.add_points(data=np.empty((0, 3)),
-            size=10, border_color='red', face_color='white', name='seed points')
+            size=10, border_color='blue', face_color='red', name='seed points')
         self.points_layer.mode = 'add'
 
     def start_floot(self):
@@ -134,9 +130,9 @@ class MMV_RegionSeg(QWidget):
         self.color += 1
         mask = np.zeros(self.image.shape, dtype=int)
         for point in seed_points:
-            mask1 = flood(self.image, point, tolerance=self.tolerance)
-            mask1 = mask1.astype(int) * self.color
-            mask += mask1
+            flood_mask = flood(self.image, point, tolerance=self.tolerance)
+            flood_mask = flood_mask.astype(int) * self.color
+            mask += flood_mask
 
         # Store the flood mask in a label layer
         self.viewer.add_labels(mask, name='flood_mask')
@@ -151,30 +147,48 @@ class MMV_RegionSeg(QWidget):
         seed_points = [tuple(map(round, row)) for row in points]
 
         # Set some start values
-        seed_point = seed_points[0]
+        shape = self.image.shape
         self.color += 1
-        radius = 0                  # Start radius
-        step = 10                   # Growth step (radius increase)
 
         # Initialize and add the mask
-        mask = np.zeros(self.image.shape, dtype=int)
+        mask = np.zeros(shape, dtype=int)
         label_layer = self.viewer.add_labels(mask, name='growth_mask')
-        mask = flood(self.image, seed_point, tolerance=self.tolerance)
 
-        for i in range(20):
-            print('step:', i)
-            radius += step
-            self.next_step(seed_point, mask, label_layer, radius)
-            label_layer.refresh()               # Force an update of the layer
-            QApplication.processEvents()        # Qt forces rendering
-            time.sleep(0.1)
+        for point in seed_points:
+            flood_mask = flood(self.image, point, tolerance=self.tolerance)
+            radius = 0              # Start radius
+            step = 10               # Growth step (radius increase)
+            sum0 = 0                # Number of pixels
+
+            go_on = True
+            while go_on:
+                print('.', end='', flush=True)
+                radius += step
+                sphere = self.new_sphere(point, radius, shape)
+
+                # Update the mask in Napari
+                mask1 = flood_mask & sphere
+                mask1 = mask1.astype(int)
+                sum1 = np.sum(mask1)
+                mask1 *= self.color
+                mask = mask | mask1
+
+                label_layer.data = mask
+                label_layer.refresh()           # Force an update of the layer
+                QApplication.processEvents()    # Qt forces rendering
+
+                if sum1 > sum0:                 # additional points were found
+                    sum0 = sum1                 # save sum for next loop
+                else:
+                    go_on = False               # terminate loop
+            print(' ', sum1, 'pixels')
 
         # Delete the points layer for the next run.
         if self.points_layer in self.viewer.layers:
             self.viewer.layers.remove(self.points_layer)
 
-    def next_step(self, seed_point, mask, label_layer, radius):
-        # (26.03.2025) Expands the mask each time
+    def new_sphere(self, seed_point, radius, shape):
+        # (25.03.2025) Expands the mask each time
         # Draw a spherical region with the current radius
         sphere = ball(radius)
 
@@ -191,17 +205,13 @@ class MMV_RegionSeg(QWidget):
         zz += (seed_point[2] - center[2])
 
         # Filter invalid indices, which are outside the image
-        valid = (rr >= 0) & (rr < self.image.shape[0]) & \
-                (cc >= 0) & (cc < self.image.shape[1]) & \
-                (zz >= 0) & (zz < self.image.shape[2])
+        valid = (rr >= 0) & (rr < shape[0]) & \
+                (cc >= 0) & (cc < shape[1]) & \
+                (zz >= 0) & (zz < shape[2])
         rr, cc, zz = rr[valid], cc[valid], zz[valid]
 
         # Update the sphere
-        sphere = np.zeros(self.image.shape, dtype=int)
-        sphere = sphere.astype(bool)
+        sphere = np.full(shape, False)
         sphere[rr, cc, zz] = True
 
-        # Update the mask in Napari
-        mask2 = mask & sphere
-        mask2 = mask2.astype(int) * self.color
-        label_layer.data = mask2
+        return sphere
