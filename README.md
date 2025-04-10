@@ -33,6 +33,79 @@ To install latest development version :
 
     pip install git+https://github.com/MMV-Lab/mmv-regionseg.git
 
+## Documentation
+
+**MMV-RegionSeg** is a Napari plugin designed to segment three-dimensional image data based on the gray value of a selected seed point. Neighboring voxels are assigned to the same class if their intensity is similar to that of the seed point or falls within a defined tolerance range.
+
+---
+
+### Launching the Plugin
+
+1. Open Napari.
+2. Go to the **Plugins** menu.
+3. Select **MMV-RegionSeg** from the dropdown.
+
+This opens a widget on the right-hand side of the Napari window, featuring several buttons, labels, and a slider.
+
+### Screenshot
+
+Here is a preview of the MMV-RegionSeg plugin in action:
+
+![MMV-RegionSeg Plugin Screenshot](https://raw.githubusercontent.com/MMV-Lab/MMV-RegionSeg/main/docs/images/plugin_screenshot.png)
+
+---
+
+###️ Loading Image Data
+
+Click the **"Read image"** button to load a 3D image in TIFF format. A standard OS file dialog will open. Once the image is selected, Napari will display it as an **image layer**.
+
+---
+
+###️ Adjusting Tolerance
+
+A **slider** below the image loading button allows you to set the gray value tolerance (range: **1–50**):
+
+- **Low tolerance**: May result in incomplete region filling.
+- **High tolerance**: May include undesired regions.
+
+> ⚠️ Choosing the right tolerance often requires trial and error.
+
+---
+
+### Selecting Seed Points
+
+Click **"Select seed points"** to activate a new **points layer** in Napari. You can then define seed points by clicking directly in the viewer.
+
+- Each seed point is visualized.
+- Multiple seed points added in one step are treated as a single class.
+- Use Napari’s **Layer Controls** to move or delete seed points.
+
+---
+
+### Segmentation Options
+
+After placing seed points, you can choose between two segmentation methods:
+
+#### Flood
+
+Click **"Flood"** to perform segmentation using  
+`skimage.segmentation.flood(...)`.  
+This identifies neighboring voxels within the tolerance range and saves them to a new **label layer**.
+
+You can repeat this process for other classes by selecting new seed points. Each class will have its own label layer.
+
+#### Growth
+
+Click **"Growth"** to visualize the segmentation **step by step**.  
+This simulates the growth of a region, similar to a cell colony expanding in a Petri dish.
+
+---
+
+### Resetting for New Segmentation
+
+After a label layer is created for a class, the **points layer is removed**, allowing you to define new seed points without affecting the existing segmentation results.
+
+---
 
 ## Contributing
 
