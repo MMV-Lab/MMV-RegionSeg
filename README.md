@@ -55,13 +55,13 @@ Here is a preview of the MMV-RegionSeg plugin in action:
 
 ---
 
-###️ Loading Image Data
+### Loading Image Data
 
 Click the **"Read image"** button to load a 3D image in TIFF format. A standard OS file dialog will open. Once the image is selected, Napari will display it as an **image layer**.
 
 ---
 
-###️ Adjusting Tolerance
+### Adjusting Tolerance
 
 A **slider** below the image loading button allows you to set the gray value tolerance (range: **1–50**):
 
