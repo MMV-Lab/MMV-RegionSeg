@@ -3,7 +3,7 @@
 [![License BSD-3](https://img.shields.io/pypi/l/mmv-regionseg.svg?color=green)](https://github.com/MMV-Lab/mmv-regionseg/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/mmv-regionseg.svg?color=green)](https://pypi.org/project/mmv-regionseg)
 [![Python Version](https://img.shields.io/pypi/pyversions/mmv-regionseg.svg?color=green)](https://python.org)
-[![tests](https://github.com/MMV-Lab/MMV-RegionSeg/workflows/tests/badge.svg)](https://github.com/MMV-Lab/MMV-RegionSeg/actions)
+[![tests](https://github.com/MMV-Lab/MMV-RegionSeg/actions/workflows/test_and_deploy.yml/badge.svg)](https://github.com/MMV-Lab/MMV-RegionSeg/actions/workflows/test_and_deploy.yml)
 [![codecov](https://codecov.io/gh/MMV-Lab/mmv-regionseg/branch/main/graph/badge.svg)](https://codecov.io/gh/MMV-Lab/mmv-regionseg)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/mmv-regionseg)](https://napari-hub.org/plugins/mmv-regionseg)
 
