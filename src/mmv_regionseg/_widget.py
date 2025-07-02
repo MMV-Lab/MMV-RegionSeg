@@ -1,4 +1,4 @@
- # Copyright © Peter Lampen, ISAS Dortmund, 2025
+# Copyright © Peter Lampen, ISAS Dortmund, 2025
 # (06.03.2025)
 
 from typing import TYPE_CHECKING
