@@ -37,7 +37,7 @@ class MMV_RegionSeg(QWidget):
         self.viewer = viewer
         self.name = None
         self.image = None
-        self.tolerance = 10
+        self.tolerance = 1000
         self.color = 0
         self.first_call = True
 
@@ -55,13 +55,13 @@ class MMV_RegionSeg(QWidget):
         vbox.addWidget(btn_read)
 
         # Label 'Tolerance: x'
-        self.lbl_tolerance = QLabel('Tolerance: 10')
+        self.lbl_tolerance = QLabel('Tolerance: 1000')
         vbox.addWidget(self.lbl_tolerance)
 
         # Slider for the tolerance
         sld_tolerance = QSlider(Qt.Horizontal)
-        sld_tolerance.setRange(1, 50)
-        sld_tolerance.setValue(10)
+        sld_tolerance.setRange(1, 20000)
+        sld_tolerance.setValue(1000)
         sld_tolerance.valueChanged.connect(self.tolerance_changed)
         vbox.addWidget(sld_tolerance)
 
