@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     import napari
 
 
-class MMV_RegionSeg(QWidget):
+class ExampleQWidget(QWidget):
     # (06.03.2025)
 
     # your QWidget.__init__ can optionally request the napari viewer instance
@@ -100,10 +100,13 @@ class MMV_RegionSeg(QWidget):
         else:
             print('Load', path)
             try:
+                QApplication.setOverrideCursor(Qt.CrossCursor)
                 self.image = imread(path)
             except BaseException as error:
                 print('Error:', error)
                 return
+            finally:
+                QApplication.restoreOverrideCursor()
 
         self.viewer.add_image(self.image, name=self.name)   # Show the image
 

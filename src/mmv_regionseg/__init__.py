@@ -1,6 +1,6 @@
 __version__ = "0.3.0"
-from ._widget import MMV_RegionSeg
+from ._widget import ExampleQWidget
 
 __all__ = (
-    "MMV_RegionSeg",
+    "ExampleQWidget",
 )
