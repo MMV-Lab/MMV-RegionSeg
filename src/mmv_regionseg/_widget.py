@@ -37,7 +37,8 @@ class ExampleQWidget(QWidget):
         self.viewer = viewer
         self.name = None
         self.image = None
-        self.tolerance = 1000
+        self.tolerance = 5
+        self.dynamic_range = [0.0, 1.0]
         self.color = 0
         self.first_call = True
 
@@ -55,14 +56,14 @@ class ExampleQWidget(QWidget):
         vbox.addWidget(btn_read)
 
         # Label 'Tolerance: x'
-        self.lbl_tolerance = QLabel('Tolerance: 1000')
+        self.lbl_tolerance = QLabel('Tolerance: 5 %')
         vbox.addWidget(self.lbl_tolerance)
 
         # Slider for the tolerance
         sld_tolerance = QSlider(Qt.Horizontal)
-        sld_tolerance.setRange(1, 20000)
-        sld_tolerance.setValue(1000)
-        sld_tolerance.valueChanged.connect(self.tolerance_changed)
+        sld_tolerance.setRange(0, 100)
+        sld_tolerance.setValue(5)
+        sld_tolerance.valueChanged.connect(self.change_tolerance)
         vbox.addWidget(sld_tolerance)
 
         # Button 'Select seed points'
@@ -110,10 +111,17 @@ class ExampleQWidget(QWidget):
 
         self.viewer.add_image(self.image, name=self.name)   # Show the image
 
-    def tolerance_changed(self, value: int):
+        # determine the dynamic range of the image
+        min1 = np.min(self.image)
+        max1 = np.max(self.image)
+        self.dynamic_range = [min1, max1]
+        print('dynamic range', self.dynamic_range)
+
+    def change_tolerance(self, value: int):
         # (06.03.2025)
-        self.tolerance = value
-        self.lbl_tolerance.setText('Tolerance: %d' % (value))
+        self.tolerance = value * self.dynamic_range[1] / 100.0
+        print('tolerance', self.tolerance)
+        self.lbl_tolerance.setText('Tolerance: %d %%' % (value))
 
     def new_seed_points(self):
         # (02.04.2025)
