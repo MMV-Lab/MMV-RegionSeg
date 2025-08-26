@@ -10,6 +10,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import (
     QApplication,
+    QComboBox,
     QFileDialog,
     QLabel,
     QPushButton,
@@ -39,6 +40,7 @@ class ExampleQWidget(QWidget):
         self.image = None
         self.tolerance = 5
         self.dynamic_range = [0.0, 1.0]
+        self.footprint = np.ones([3, 3, 3], dtype=int)
         self.color = 0
         self.first_call = True
 
@@ -65,6 +67,18 @@ class ExampleQWidget(QWidget):
         sld_tolerance.setValue(5)
         sld_tolerance.valueChanged.connect(self.change_tolerance)
         vbox.addWidget(sld_tolerance)
+
+        # Label 'Footprint'
+        lbl_footprint = QLabel('Footprint')
+        vbox.addWidget(lbl_footprint)
+
+        # Combo box for the foodprint
+        cbx_footprint = QComboBox()
+        cbx_footprint.addItems(['6 neighbors', '18 neighbors', '26 neighbors',
+            'right', 'left'])
+        cbx_footprint.setCurrentIndex(2)
+        cbx_footprint.currentIndexChanged.connect(self.new_footprint)
+        vbox.addWidget(cbx_footprint)
 
         # Button 'Select seed points'
         btn_seed_points = QPushButton('Select seed points')
@@ -115,13 +129,56 @@ class ExampleQWidget(QWidget):
         min1 = np.min(self.image)
         max1 = np.max(self.image)
         self.dynamic_range = [min1, max1]
-        print('dynamic range', self.dynamic_range)
+        print('dynamic range:', self.dynamic_range)
 
     def change_tolerance(self, value: int):
         # (06.03.2025)
-        self.tolerance = value * self.dynamic_range[1] / 100.0
-        print('tolerance', self.tolerance)
-        self.lbl_tolerance.setText('Tolerance: %d %%' % (value))
+        delta = self.dynamic_range[1] - self.dynamic_range[0]
+        self.tolerance = value * delta / 100.0
+        print('tolerance:', self.tolerance)
+        self.lbl_tolerance.setText('Tolerance: %d %% (%f)' % (value,
+            self.tolerance))
+
+    def new_footprint(self, i: int):
+        if i == 0:
+            self.footprint = np.zeros([3, 3, 3], dtype=int)
+            self.footprint[0, 1, 1] = 1
+            self.footprint[1, 0, 1] = 1
+            self.footprint[1, 1, 0] = 1
+            self.footprint[1, 1, 1] = 1
+            self.footprint[1, 1, 2] = 1
+            self.footprint[0, 2, 1] = 1
+            self.footprint[2, 1, 1] = 1
+        elif i == 1:
+            self.footprint = np.ones([3, 3, 3], dtype=int)
+            self.footprint[0, 0, 0] = 0
+            self.footprint[0, 0, 2] = 0
+            self.footprint[0, 2, 0] = 0
+            self.footprint[0, 2, 2] = 0
+            self.footprint[2, 0, 0] = 0
+            self.footprint[2, 0, 2] = 0
+            self.footprint[2, 2, 0] = 0
+            self.footprint[2, 2, 2] = 0
+        elif i == 2:
+            self.footprint = np.ones([3, 3, 3], dtype=int)
+        elif i == 3:
+            self.footprint = np.zeros([3, 3, 3], dtype=int)
+            self.footprint[0, 1, 1] = 1
+            self.footprint[1, 0, 1] = 1
+            # self.footprint[1, 1, 0] = 1
+            self.footprint[1, 1, 1] = 1
+            self.footprint[1, 1, 2] = 1
+            self.footprint[0, 2, 1] = 1
+            self.footprint[2, 1, 1] = 1
+        elif i == 4:
+            self.footprint = np.zeros([3, 3, 3], dtype=int)
+            self.footprint[0, 1, 1] = 1
+            self.footprint[1, 0, 1] = 1
+            self.footprint[1, 1, 0] = 1
+            self.footprint[1, 1, 1] = 1
+            #self.footprint[1, 1, 2] = 1
+            self.footprint[0, 2, 1] = 1
+            self.footprint[2, 1, 1] = 1
 
     def new_seed_points(self):
         # (02.04.2025)
@@ -141,7 +198,8 @@ class ExampleQWidget(QWidget):
         self.color += 1
         mask = np.zeros(self.image.shape, dtype=int)
         for point in seed_points:
-            flood_mask = flood(self.image, point, tolerance=self.tolerance)
+            flood_mask = flood(self.image, point, footprint=self.footprint,
+                tolerance=self.tolerance)
             flood_mask = flood_mask.astype(int) * self.color
             mask += flood_mask
 
@@ -166,7 +224,8 @@ class ExampleQWidget(QWidget):
         label_layer = self.viewer.add_labels(mask, name='growth_mask')
 
         for point in seed_points:
-            flood_mask = flood(self.image, point, tolerance=self.tolerance)
+            flood_mask = flood(self.image, point, footprint=self.footprint,
+                tolerance=self.tolerance)
             radius = 0              # Start radius
             step = 10               # Growth step (radius increase)
             sum0 = 0                # Number of pixels
