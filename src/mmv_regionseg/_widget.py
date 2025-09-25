@@ -38,8 +38,8 @@ class ExampleQWidget(QWidget):
         self.viewer = viewer
         self.name = None
         self.image = None
-        self.tolerance = 5
-        self.dynamic_range = [0.0, 1.0]
+        self.tolerance = 10
+        self.dynamic_range = [0.0, 255.0]
         self.footprint = np.ones([3, 3, 3], dtype=int)
         self.color = 0
         self.first_call = True
@@ -58,13 +58,13 @@ class ExampleQWidget(QWidget):
         vbox.addWidget(btn_read)
 
         # Label 'Tolerance: x'
-        self.lbl_tolerance = QLabel('Tolerance: 5 %')
+        self.lbl_tolerance = QLabel('Tolerance: 10 % (25.50)')
         vbox.addWidget(self.lbl_tolerance)
 
         # Slider for the tolerance
         sld_tolerance = QSlider(Qt.Horizontal)
         sld_tolerance.setRange(0, 100)
-        sld_tolerance.setValue(5)
+        sld_tolerance.setValue(10)
         sld_tolerance.valueChanged.connect(self.change_tolerance)
         vbox.addWidget(sld_tolerance)
 
@@ -74,8 +74,7 @@ class ExampleQWidget(QWidget):
 
         # Combo box for the foodprint
         cbx_footprint = QComboBox()
-        cbx_footprint.addItems(['6 neighbors', '18 neighbors', '26 neighbors',
-            'right', 'left'])
+        cbx_footprint.addItems(['6 neighbors', '18 neighbors', '26 neighbors'])
         cbx_footprint.setCurrentIndex(2)
         cbx_footprint.currentIndexChanged.connect(self.new_footprint)
         vbox.addWidget(cbx_footprint)
@@ -135,8 +134,7 @@ class ExampleQWidget(QWidget):
         # (06.03.2025)
         delta = self.dynamic_range[1] - self.dynamic_range[0]
         self.tolerance = value * delta / 100.0
-        print('tolerance:', self.tolerance)
-        self.lbl_tolerance.setText('Tolerance: %d %% (%f)' % (value,
+        self.lbl_tolerance.setText('Tolerance: %d %% (%.2f)' % (value,
             self.tolerance))
 
     def new_footprint(self, i: int):
@@ -161,24 +159,6 @@ class ExampleQWidget(QWidget):
             self.footprint[2, 2, 2] = 0
         elif i == 2:
             self.footprint = np.ones([3, 3, 3], dtype=int)
-        elif i == 3:
-            self.footprint = np.zeros([3, 3, 3], dtype=int)
-            self.footprint[0, 1, 1] = 1
-            self.footprint[1, 0, 1] = 1
-            # self.footprint[1, 1, 0] = 1
-            self.footprint[1, 1, 1] = 1
-            self.footprint[1, 1, 2] = 1
-            self.footprint[0, 2, 1] = 1
-            self.footprint[2, 1, 1] = 1
-        elif i == 4:
-            self.footprint = np.zeros([3, 3, 3], dtype=int)
-            self.footprint[0, 1, 1] = 1
-            self.footprint[1, 0, 1] = 1
-            self.footprint[1, 1, 0] = 1
-            self.footprint[1, 1, 1] = 1
-            #self.footprint[1, 1, 2] = 1
-            self.footprint[0, 2, 1] = 1
-            self.footprint[2, 1, 1] = 1
 
     def new_seed_points(self):
         # (02.04.2025)
