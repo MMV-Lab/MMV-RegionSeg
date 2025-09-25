@@ -1,17 +1,19 @@
 [build-system]
-requires = ["setuptools>=42.0.0", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mmv-regionseg"
 version = "0.3.0"
 description = "Napari plugin for the segmentation of regions by flood"
+authors = [
+    {name = "Peter Lampen", email = "lampen@isas.de"}
+]
 readme = "README.md"
-authors = [{name = "Peter Lampen", email = "lampen@isas.de"}]
-license = {file = "LICENSE"}
 requires-python = ">=3.9"
+license = {file = "LICENSE"}
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Framework :: napari",
     "Topic :: Scientific/Engineering :: Image Processing",
@@ -25,21 +27,20 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 dependencies = [
-    "napari",
-    "numpy",
-    "qtpy",
-    "scikit-image",
-    "tifffile",
+    "napari>=0.5.0,<0.6.0",
+    "numpy>=1.23,<2.0",
+    "qtpy>=2.0",
+    "scikit-image>=0.20",
+    "tifffile>=2023.2.28",
 ]
 
 [project.optional-dependencies]
+qt = ["pyqt5>=5.15"]
 testing = [
-    "tox",
-    "pytest",  # https://docs.pytest.org/en/latest/contents.html
-    "pytest-cov",  # https://pytest-cov.readthedocs.io/en/latest/
-    "pytest-qt",  # https://pytest-qt.readthedocs.io/en/latest/
-    "napari",
-    "pyqt5",
+    "tox>=4.0",
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-qt>=4.0",
 ]
 
 [project.urls]

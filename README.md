@@ -51,7 +51,7 @@ This opens a widget on the right-hand side of the Napari window, featuring sever
 
 Here is a preview of the MMV-RegionSeg plugin:
 
-![MMV-RegionSeg Plugin Screenshot](https://raw.githubusercontent.com/MMV-Lab/MMV-RegionSeg/main/docs/images/plugin_screenshot.png)
+![MMV-RegionSeg Plugin Screenshot](https://raw.githubusercontent.com/MMV-Lab/MMV-RegionSeg/main/docs/images/plugin_screenshot1.png)
 
 ---
 

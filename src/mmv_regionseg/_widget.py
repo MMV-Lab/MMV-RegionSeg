@@ -10,6 +10,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import (
     QApplication,
+    QComboBox,
     QFileDialog,
     QLabel,
     QPushButton,
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
     import napari
 
 
-class MMV_RegionSeg(QWidget):
+class ExampleQWidget(QWidget):
     # (06.03.2025)
 
     # your QWidget.__init__ can optionally request the napari viewer instance
@@ -38,6 +39,8 @@ class MMV_RegionSeg(QWidget):
         self.name = None
         self.image = None
         self.tolerance = 10
+        self.dynamic_range = [0.0, 255.0]
+        self.footprint = np.ones([3, 3, 3], dtype=int)
         self.color = 0
         self.first_call = True
 
@@ -55,15 +58,26 @@ class MMV_RegionSeg(QWidget):
         vbox.addWidget(btn_read)
 
         # Label 'Tolerance: x'
-        self.lbl_tolerance = QLabel('Tolerance: 10')
+        self.lbl_tolerance = QLabel('Tolerance: 10 % (25.50)')
         vbox.addWidget(self.lbl_tolerance)
 
         # Slider for the tolerance
         sld_tolerance = QSlider(Qt.Horizontal)
-        sld_tolerance.setRange(1, 50)
+        sld_tolerance.setRange(0, 100)
         sld_tolerance.setValue(10)
-        sld_tolerance.valueChanged.connect(self.tolerance_changed)
+        sld_tolerance.valueChanged.connect(self.change_tolerance)
         vbox.addWidget(sld_tolerance)
+
+        # Label 'Footprint'
+        lbl_footprint = QLabel('Footprint')
+        vbox.addWidget(lbl_footprint)
+
+        # Combo box for the foodprint
+        cbx_footprint = QComboBox()
+        cbx_footprint.addItems(['6 neighbors', '18 neighbors', '26 neighbors'])
+        cbx_footprint.setCurrentIndex(2)
+        cbx_footprint.currentIndexChanged.connect(self.new_footprint)
+        vbox.addWidget(cbx_footprint)
 
         # Button 'Select seed points'
         btn_seed_points = QPushButton('Select seed points')
@@ -100,17 +114,51 @@ class MMV_RegionSeg(QWidget):
         else:
             print('Load', path)
             try:
+                QApplication.setOverrideCursor(Qt.CrossCursor)
                 self.image = imread(path)
             except BaseException as error:
                 print('Error:', error)
                 return
+            finally:
+                QApplication.restoreOverrideCursor()
 
         self.viewer.add_image(self.image, name=self.name)   # Show the image
 
-    def tolerance_changed(self, value: int):
+        # determine the dynamic range of the image
+        min1 = np.min(self.image)
+        max1 = np.max(self.image)
+        self.dynamic_range = [min1, max1]
+        print('dynamic range:', self.dynamic_range)
+
+    def change_tolerance(self, value: int):
         # (06.03.2025)
-        self.tolerance = value
-        self.lbl_tolerance.setText('Tolerance: %d' % (value))
+        delta = self.dynamic_range[1] - self.dynamic_range[0]
+        self.tolerance = value * delta / 100.0
+        self.lbl_tolerance.setText('Tolerance: %d %% (%.2f)' % (value,
+            self.tolerance))
+
+    def new_footprint(self, i: int):
+        if i == 0:
+            self.footprint = np.zeros([3, 3, 3], dtype=int)
+            self.footprint[0, 1, 1] = 1
+            self.footprint[1, 0, 1] = 1
+            self.footprint[1, 1, 0] = 1
+            self.footprint[1, 1, 1] = 1
+            self.footprint[1, 1, 2] = 1
+            self.footprint[0, 2, 1] = 1
+            self.footprint[2, 1, 1] = 1
+        elif i == 1:
+            self.footprint = np.ones([3, 3, 3], dtype=int)
+            self.footprint[0, 0, 0] = 0
+            self.footprint[0, 0, 2] = 0
+            self.footprint[0, 2, 0] = 0
+            self.footprint[0, 2, 2] = 0
+            self.footprint[2, 0, 0] = 0
+            self.footprint[2, 0, 2] = 0
+            self.footprint[2, 2, 0] = 0
+            self.footprint[2, 2, 2] = 0
+        elif i == 2:
+            self.footprint = np.ones([3, 3, 3], dtype=int)
 
     def new_seed_points(self):
         # (02.04.2025)
@@ -130,7 +178,8 @@ class MMV_RegionSeg(QWidget):
         self.color += 1
         mask = np.zeros(self.image.shape, dtype=int)
         for point in seed_points:
-            flood_mask = flood(self.image, point, tolerance=self.tolerance)
+            flood_mask = flood(self.image, point, footprint=self.footprint,
+                tolerance=self.tolerance)
             flood_mask = flood_mask.astype(int) * self.color
             mask += flood_mask
 
@@ -155,7 +204,8 @@ class MMV_RegionSeg(QWidget):
         label_layer = self.viewer.add_labels(mask, name='growth_mask')
 
         for point in seed_points:
-            flood_mask = flood(self.image, point, tolerance=self.tolerance)
+            flood_mask = flood(self.image, point, footprint=self.footprint,
+                tolerance=self.tolerance)
             radius = 0              # Start radius
             step = 10               # Growth step (radius increase)
             sum0 = 0                # Number of pixels

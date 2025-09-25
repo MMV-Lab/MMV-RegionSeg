@@ -1,17 +1,13 @@
 name: mmv-regionseg
-display_name: MMV-Region Segmentation
-# use 'hidden' to remove plugin from napari hub search results
-schema_version: 0.2.0
+display_name: MMV-RegionSeg
 visibility: public
-# see
-# https://napari.org/stable/plugins/technical_references/manifest.html#fields
-# for valid categories
-categories: ["Segmentation"]
+categories: ["Segmentation", "Image Processing"]
+
 contributions:
   commands:
-    - id: mmv-regionseg.make_mmv_regionseg
-      python_name: mmv_regionseg._widget:MMV_RegionSeg
-      title: Make MMV RegionSeg
+    - id: mmv-regionseg.make_qwidget
+      python_name: mmv_regionseg:ExampleQWidget
+      title: Make example QWidget
   widgets:
-    - command: mmv-regionseg.make_mmv_regionseg
-      display_name: MMV-RegionSeg
+    - command: mmv-regionseg.make_qwidget
+      display_name: MMV-Region Segmentation
