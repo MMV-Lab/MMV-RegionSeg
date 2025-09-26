@@ -7,7 +7,9 @@
 [![codecov](https://codecov.io/gh/MMV-Lab/mmv-regionseg/branch/main/graph/badge.svg)](https://codecov.io/gh/MMV-Lab/mmv-regionseg)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/mmv-regionseg)](https://napari-hub.org/plugins/mmv-regionseg)
 
-A Napari plugin for the segmentation of regions by flood_fill
+*This README is in English. A German version is available here:* [README.de.md](README.de.md)
+
+A Napari plugin for region segmentation using flood fill
 
 ----------------------------------
 
@@ -27,15 +29,13 @@ You can install `mmv-regionseg` via [pip]:
 
     pip install mmv-regionseg
 
-
-
 To install latest development version :
 
     pip install git+https://github.com/MMV-Lab/mmv-regionseg.git
 
 ## Documentation
 
-**MMV-RegionSeg** is a Napari plugin designed to segment three-dimensional image data based on the gray value of a selected seed point. Neighboring voxels are assigned to the same class if their intensity is similar to that of the seed point or falls within a defined tolerance range.
+**MMV-RegionSeg** is a Napari plugin designed to segment three-dimensional image data based on the gray value of a selected seed point. Neighboring voxels are assigned to the same class if their intensity is sufficient similar to that of the seed point or falls within a defined tolerance range.
 
 ---
 
@@ -45,11 +45,9 @@ To install latest development version :
 2. Go to the **Plugins** menu.
 3. Select **MMV-RegionSeg** from the dropdown.
 
-This opens a widget on the right-hand side of the Napari window, featuring several buttons, labels, and a slider.
+A widget will appear on the right-hand side of the Napari window, containing buttons, labels, and a slider.
 
 ### Screenshot
-
-Here is a preview of the MMV-RegionSeg plugin:
 
 ![MMV-RegionSeg Plugin Screenshot](https://raw.githubusercontent.com/MMV-Lab/MMV-RegionSeg/main/docs/images/plugin_screenshot1.png)
 
@@ -63,21 +61,32 @@ Click the **"Read image"** button to load a 3D image in TIFF format. A standard 
 
 ### Adjusting Tolerance
 
-A **slider** below the image loading button allows you to set the gray value tolerance (range: **1–50**):
+Use the **slider** below the image loading button to set the gray-value tolerance (0%–100% of the dynamic range):
 
-- **Low tolerance**: May result in incomplete region filling.
-- **High tolerance**: May include undesired regions.
+- **Low tolerance** → risk of incomplete region filling.
+- **High tolerance** → risk of including undesired regions.
 
-> ⚠️ Choosing the right tolerance often requires trial and error.
+> ⚠️ The optimal tolerance often requires some experimentation.
+
+---
+
+### Definition of the Footprint
+
+Use the **dropdown list** to select the footprint for `skimage.segmentation.flood`.
+See also: [Flood Fill].
+
+- **6 neighbors** → Only voxels directly adjacent in X, Y, and Z are considered.
+- **18 neighbors** → Includes voxels diagonally adjacent along faces and edges.
+- **26 neighbors** → All neighboring voxels are included.
 
 ---
 
 ### Selecting Seed Points
 
-Click **"Select seed points"** to activate a new **points layer** in Napari. You can then define seed points by clicking directly in the viewer.
+Click **"Select seed points"** to activate a new **points layer** in Napari. You can then define seed points directly in the viewer.
 
 - Each seed point is visualized.
-- Multiple seed points added in one step are treated as a single class.
+- Multiple seed points defined in one step are treated as one class.
 - Use Napari’s **Layer Controls** to move or delete seed points.
 
 ---
@@ -88,29 +97,30 @@ After placing seed points, you can choose between two segmentation methods:
 
 #### Flood
 
-Click **"Flood"** to perform segmentation using  
-`skimage.segmentation.flood(...)`.  
+Click **Flood** to perform segmentation using `skimage.segmentation.flood`.
 This identifies neighboring voxels within the tolerance range and saves them to a new **label layer**.
 
-You can repeat this process for other classes by selecting new seed points. Each class will have its own label layer.
+You can repeat this for additional classes by selecting new seed points. Each class receives its own label layer.
 
 #### Growth
 
-Click **"Growth"** to visualize the segmentation **step by step**.  
-This simulates the growth of a region, similar to a cell colony expanding in a Petri dish.
+Click **Growth** to visualize the segmentation **step by step**.  
+This simulates the growth of a region, similar to the expansion of a cell colony in a Petri dish.
 
 ---
 
 ### Resetting for New Segmentation
 
-After a label layer is created for a class, the **points layer is removed**, allowing you to define new seed points without affecting the existing segmentation results.
+After a label layer is created, the **points layer is removed**, allowing you to define new seed points without affecting the existing segmentation results.
 
 ---
 
 ## Contributing
 
-Contributions are very welcome. Tests can be run with [tox], please ensure
-the coverage at least stays the same before you submit a pull request.
+Contributions are welcome!
+
+
+Tests can be run with [tox]; please ensure that coverage does not decrease before submiting a pull request.
 
 ## License
 
@@ -138,3 +148,4 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/
 [PyPI]: https://pypi.org/
+[Flood Fill]: https://scikit-image.org/docs/0.25.x/auto_examples/segmentation/plot_floodfill
