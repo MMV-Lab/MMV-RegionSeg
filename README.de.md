@@ -94,7 +94,7 @@ Nach dem Setzen der Seed Points kannst du zwischen zwei Methoden wählen:
 
 #### Flood
 
-Klick auf **"Flood"**, um `skimage.segmentation.flood(...)` auszuführen.  
+Klick auf **"Flood"**, um `skimage.segmentation.flood` auszuführen.  
 Die Nachbarvoxels innerhalb der Toleranz werden in einem neuen **Label-Layer** gespeichert.
 
 #### Growth

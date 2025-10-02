@@ -16,7 +16,7 @@ from mmv_regionseg._widget import ExampleQWidget
 
 @pytest.fixture
 def widget(make_napari_viewer):
-    # (20.03.2025) create an ExampleQWidget object and give it back
+    # (20.03.2025)
     return ExampleQWidget(make_napari_viewer())
 
 @pytest.mark.init
@@ -33,5 +33,4 @@ def test_init(widget):
     assert widget.dynamic_range == [0.0, 255.0]
     assert np.array_equal (widget.footprint, np.ones([3, 3, 3], dtype=int))
     assert widget.color == 0
-    assert widget.first_call == True
     assert widget.lbl_tolerance.text() == 'Tolerance: 10 % (25.50)'

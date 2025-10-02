@@ -1,3 +1,16 @@
+"""
+_widget.py
+==========
+
+This module provides a QWidget for region segmentation in Napari using
+``skimage.segmentation.flood``.
+
+Classes
+-------
+ExampleQWidget
+    Napari plugin widget for interactive region segmentation.
+"""
+
 # Copyright © Peter Lampen, ISAS Dortmund, 2025
 # (06.03.2025)
 
@@ -7,7 +20,6 @@ import napari
 import numpy as np
 from pathlib import Path
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
@@ -22,18 +34,51 @@ from qtpy.QtWidgets import (
 from skimage.morphology import ball
 from skimage.segmentation import flood, flood_fill
 from tifffile import imread
-import time
 
 if TYPE_CHECKING:
     import napari
 
 
 class ExampleQWidget(QWidget):
-    # (06.03.2025)
+    """
+    Widget for a Napari plugin for region segmentation using
+    skimage.segmentation.flood
 
+    Parameters
+    ----------
+    viewer : class napari.viewer.Viewer
+
+    Attributes
+    ----------
+    viewer : class napari.viewer.Viewer
+    name : str
+        Name of the input image
+    image : numpy.ndarray
+        Input image
+    tolerance : int or float
+        tolerance for the function skimage.segmentation.flood
+    dynamic_range : list of float
+        Dynamic range of the input image
+    footprint : numpy.ndarray
+        footprint for the function skimage.segmentation.flood
+    color : int
+        Sequential label ID
+    lbl_tolerance : str
+        QLabel for the tolerance slider
+    """
+
+    # (06.03.2025)
     # your QWidget.__init__ can optionally request the napari viewer instance
     # use a type annotation of 'napari.viewer.Viewer' for any parameter
     def __init__(self, viewer: "napari.viewer.Viewer"):
+        """
+        Initialize the ExampleQWidget.
+        
+        Parameters
+        ----------
+        viewer : napari.viewer.Viewer
+            The Napari viewer instance in which this widget operates.
+        """
         super().__init__()
         self.viewer = viewer
         self.name = None
@@ -42,7 +87,6 @@ class ExampleQWidget(QWidget):
         self.dynamic_range = [0.0, 255.0]
         self.footprint = np.ones([3, 3, 3], dtype=int)
         self.color = 0
-        self.first_call = True
 
         # Define a vbox for the main widget
         vbox = QVBoxLayout()
@@ -84,10 +128,10 @@ class ExampleQWidget(QWidget):
         btn_seed_points.clicked.connect(self.new_seed_points)
         vbox.addWidget(btn_seed_points)
 
-        # Button 'Start floot'
-        btn_floot = QPushButton('Floot')
-        btn_floot.clicked.connect(self.start_floot)
-        vbox.addWidget(btn_floot)
+        # Button 'Start flood'
+        btn_flood = QPushButton('Flood')
+        btn_flood.clicked.connect(self.start_flood)
+        vbox.addWidget(btn_flood)
 
         # Button 'Growth'
         btn_growth = QPushButton('Growth')
@@ -95,7 +139,11 @@ class ExampleQWidget(QWidget):
         vbox.addWidget(btn_growth)
 
     def read_image(self):
-        # Find and load the image file
+        """
+        Requests the file name, reads the image file, and displays the image in
+        Napari.
+        """
+
         filter1 = 'TIFF files (*.tif *.tiff);;All files (*.*)'
         filename, _ = QFileDialog.getOpenFileName(self, 'Image file', '',
             filter1)
@@ -131,6 +179,18 @@ class ExampleQWidget(QWidget):
         print('dynamic range:', self.dynamic_range)
 
     def change_tolerance(self, value: int):
+        """
+        Update the tolerance value based on the slider input.
+
+        The tolerance is calculated as a percentage of the image
+        dynamic range and displayed in the ``lbl_tolerance`` label.
+
+        Parameters
+        ----------
+        value : int
+            Percentage value (0–100) from the slider.
+        """
+
         # (06.03.2025)
         delta = self.dynamic_range[1] - self.dynamic_range[0]
         self.tolerance = value * delta / 100.0
@@ -138,6 +198,18 @@ class ExampleQWidget(QWidget):
             self.tolerance))
 
     def new_footprint(self, i: int):
+        """
+        Callback for the drop-down list cbx_footprint
+
+        Depending on the value of parameter i, one of three variants is
+        selected for the Footprint attribute.
+
+        Parameters
+        ----------
+        i : int
+            Index for selecting a footprint for skimage.segmentation.flood.
+        """
+
         if i == 0:
             self.footprint = np.zeros([3, 3, 3], dtype=int)
             self.footprint[0, 1, 1] = 1
@@ -161,16 +233,29 @@ class ExampleQWidget(QWidget):
             self.footprint = np.ones([3, 3, 3], dtype=int)
 
     def new_seed_points(self):
+        """
+        Create a new points layer in napari for seed selection.
+
+        The layer is initialized empty and set to 'add' mode so that
+        the user can place seed points interactively in the viewer.
+        """
+
         # (02.04.2025)
-        # Define a points layer
         self.points_layer = self.viewer.add_points(data=np.empty((0, 3)),
             size=10, border_color='blue', face_color='red', name='seed points')
         self.points_layer.mode = 'add'
 
-    def start_floot(self):
+    def start_flood(self):
+        """
+        Creates a new label layer using the skimage.segmentation.flood function.
+
+        The points defined in the points layer are used as starting points to
+        create a label layer. The attributes footprint and tolerance are used
+        for this purpose.
+        """
+
         # (07.03.2025)
-        # Form a list of tuples from the ndarray points_layer.data and convert
-        # the data into int values
+        # Create a list of coordinate tuples from the ndarray.
         points = self.points_layer.data
         seed_points = [tuple(map(round, row)) for row in points]
 
@@ -191,6 +276,17 @@ class ExampleQWidget(QWidget):
             self.viewer.layers.remove(self.points_layer)
 
     def growth_tool_3d(self):
+        """
+        Callback for the btn_growth button.
+
+        Using the starting points from the points layer, a mask is calculated
+        with the flood function. A sphere with a small radius is placed around
+        the starting point. This sphere is intersected with the mask and the
+        intersection is displayed as a label layer. The radius of the sphere
+        is then increased and the previous steps are repeated until the mask
+        is completely enclosed by the sphere.
+        """
+
         # (26.03.2025)
         points = self.points_layer.data
         seed_points = [tuple(map(round, row)) for row in points]
@@ -237,9 +333,28 @@ class ExampleQWidget(QWidget):
         if self.points_layer in self.viewer.layers:
             self.viewer.layers.remove(self.points_layer)
 
-    def new_sphere(self, seed_point, radius, shape):
+    def new_sphere(self, seed_point: tuple[int, int, int], radius: int,
+        shape: tuple[int, int, int]):
+        """
+        Create a spherical mask around a given seed point.
+
+        Parameters
+        ----------
+        seed_point : tuple of int
+            Center of the sphere (z, y, x).
+        radius : int
+            Radius of the shere in pixels.
+        shape : tuple
+            Shape of the image volume (z, y, x).
+
+        Returns
+        -------
+        numpy.ndarray of bool
+            Boolean mask of the same shape as the image, with ``True`` values
+            inside the sphere.
+        """
+
         # (25.03.2025) Expands the mask each time
-        # Draw a spherical region with the current radius
         sphere = ball(radius)
 
         # Spherical mask has a shape (d, h, w) where d=depth, h=height, w=width

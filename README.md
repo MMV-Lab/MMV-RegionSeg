@@ -47,6 +47,8 @@ To install latest development version :
 
 A widget will appear on the right-hand side of the Napari window, containing buttons, labels, and a slider.
 
+---
+
 ### Screenshot
 
 ![MMV-RegionSeg Plugin Screenshot](https://raw.githubusercontent.com/MMV-Lab/MMV-RegionSeg/main/docs/images/plugin_screenshot1.png)
@@ -118,7 +120,6 @@ After a label layer is created, the **points layer is removed**, allowing you to
 ## Contributing
 
 Contributions are welcome!
-
 
 Tests can be run with [tox]; please ensure that coverage does not decrease before submiting a pull request.
 
