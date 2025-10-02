@@ -46,8 +46,12 @@ jobs:
         env:
           PLATFORM: ${{ matrix.platform }}
 
-      - name: Upload coverage to Coverage
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
+        with:
+            files: ./coverage.xml
+            token: ${{ secrets.CODECOV_TOKEN }}
+            fail_ci_if_error: true
 
   build:
     name: Build distribution
